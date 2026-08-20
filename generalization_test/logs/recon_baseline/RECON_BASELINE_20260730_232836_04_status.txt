@@ -1,0 +1,5 @@
+run_id=RECON_BASELINE_20260730_232836_04
+adapter_start=1785244536.202083835
+prediction_detected=1785244552.917526495
+adapter_end=1785244560.077421127
+prediction_found=1

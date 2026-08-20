@@ -1,0 +1,6 @@
+Schema report: {
+  "required_feature_count": 66,
+  "present_feature_count": 66,
+  "missing_features": []
+}
+{"entity": "192.168.56.20", "timestamp_unix_s": 1785263072.144, "stage": "RECONNAISSANCE", "class_id": 5, "confidence": 0.9554837346076965, "attack_score": 0.9585852026939392, "threshold": 0.4, "probabilities": {"BENIGN": 0.0414147824048996, "COVER UP": 0.0013922498328611255, "DATA EXFILTRATION": 0.00044989484013058245, "ESTABLISH FOOTHOLD": 0.0009565426735207438, "LATERAL MOVEMENT": 0.00030276956385932863, "RECONNAISSANCE": 0.9554837346076965}}

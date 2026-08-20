@@ -1,0 +1,156 @@
+{
+  "pipeline_name": "unraveled_v4_sequence_safe_prior_safe",
+  "input_file": "/kaggle/input/notebooks/trng3006/01-merge-unraveled-v2/unraveled_merged_v2/output.csv",
+  "split_mode": "block_stratified_random",
+  "split_ratio": [
+    0.7,
+    0.15,
+    0.15
+  ],
+  "sequence": {
+    "length": 50,
+    "stride": 10,
+    "block_rows": 250,
+    "train_min_label_purity": 0.02,
+    "input_shape": [
+      50,
+      21
+    ]
+  },
+  "sequence_grouping": "source_ip_or_fallback_metadata_only",
+  "absolute_timestamp_used_as_feature": false,
+  "derived_time_features": [
+    "entity_time_delta_s",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos"
+  ],
+  "feature_selection": {
+    "method": "mi_su_mrmr",
+    "selected": [
+      "src2dst_rst_packets",
+      "bidirectional_bytes",
+      "src2dst_max_ps",
+      "bidirectional_mean_piat_ms",
+      "bidirectional_max_ps",
+      "src2dst_bytes",
+      "dst2src_bytes",
+      "dst2src_stddev_piat_ms",
+      "src2dst_mean_ps",
+      "dst2src_max_ps",
+      "bidirectional_rst_packets",
+      "src2dst_mean_piat_ms",
+      "dst2src_mean_ps",
+      "bidirectional_ack_packets",
+      "bidirectional_stddev_ps",
+      "bidirectional_duration_ms",
+      "bidirectional_max_piat_ms",
+      "bidirectional_mean_ps",
+      "dst2src_mean_piat_ms",
+      "src2dst_stddev_ps",
+      "dst2src_ack_packets"
+    ],
+    "count": 21
+  },
+  "outlier": {
+    "mode": "clip",
+    "z_threshold": 5.0,
+    "columns": [
+      "bidirectional_duration_ms",
+      "bidirectional_bytes",
+      "src2dst_duration_ms",
+      "src2dst_bytes",
+      "dst2src_duration_ms",
+      "dst2src_bytes",
+      "bidirectional_min_ps",
+      "bidirectional_mean_ps",
+      "bidirectional_stddev_ps",
+      "bidirectional_max_ps",
+      "src2dst_min_ps",
+      "src2dst_mean_ps",
+      "src2dst_stddev_ps",
+      "src2dst_max_ps",
+      "dst2src_min_ps",
+      "dst2src_mean_ps",
+      "dst2src_stddev_ps",
+      "dst2src_max_ps"
+    ]
+  },
+  "balancing": {
+    "method": "moderate_benign_undersampling_no_sequence_smote",
+    "benign_to_total_attack_ratio": 8.0,
+    "natural_train_window_counts": [
+      368448,
+      80,
+      1448,
+      4878,
+      25170,
+      2416
+    ],
+    "sampled_train_window_counts": [
+      271936,
+      80,
+      1448,
+      4878,
+      25170,
+      2416
+    ]
+  },
+  "classes": [
+    "BENIGN",
+    "COVER UP",
+    "DATA EXFILTRATION",
+    "ESTABLISH FOOTHOLD",
+    "LATERAL MOVEMENT",
+    "RECONNAISSANCE"
+  ],
+  "shapes": {
+    "train": [
+      305928,
+      50,
+      21
+    ],
+    "validation": [
+      85959,
+      50,
+      21
+    ],
+    "test": [
+      86995,
+      50,
+      21
+    ]
+  },
+  "leakage_columns_removed": [
+    "id",
+    "expiration_id",
+    "src_ip",
+    "src_mac",
+    "src_oui",
+    "src_port",
+    "dst_ip",
+    "dst_mac",
+    "dst_oui",
+    "dst_port",
+    "bidirectional_first_seen_ms",
+    "bidirectional_last_seen_ms",
+    "src2dst_first_seen_ms",
+    "src2dst_last_seen_ms",
+    "dst2src_first_seen_ms",
+    "dst2src_last_seen_ms",
+    "requested_server_name",
+    "client_fingerprint",
+    "server_fingerprint",
+    "user_agent",
+    "Activity",
+    "DefenderResponse",
+    "Signature"
+  ],
+  "constant_columns_removed": [
+    "vlan_id",
+    "dst2src_cwr_packets",
+    "dst2src_ece_packets",
+    "dst2src_urg_packets"
+  ]
+}

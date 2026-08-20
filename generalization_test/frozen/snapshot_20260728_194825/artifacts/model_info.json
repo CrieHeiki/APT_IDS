@@ -1,0 +1,22 @@
+{
+  "architecture": "cnn_bilstm_mha_safe",
+  "model": "CNN-BiLSTM-MultiHeadAttention v4.5 Safe",
+  "selection_basis": "validation calibrated Macro-F1 with BENIGN FPR penalty",
+  "threshold": {
+    "threshold": 0.4,
+    "macro_f1": 0.9038176566287155,
+    "fpr_benign": 0.008551903180238995,
+    "accuracy": 0.989553159064205,
+    "cover_up_f1": 0.6451612903225806,
+    "data_exfiltration_f1": 0.8976377952755905,
+    "feasible": true,
+    "objective": 0.9038176566287155
+  },
+  "scientific_methods": [
+    "MI+SU+mRMR feature selection",
+    "Dropout-contrastive representation pretraining",
+    "Focal loss with bounded class weighting",
+    "Dropout and L2 regularization",
+    "Prior correction and validation-only threshold calibration"
+  ]
+}

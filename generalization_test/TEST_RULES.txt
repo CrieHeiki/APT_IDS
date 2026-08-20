@@ -1,0 +1,8 @@
+1. Không sửa model, scaler, encoder, threshold hoặc adapter sau khi bắt đầu đánh giá.
+2. Không điều chỉnh biến thể dựa trên xác suất model để ép kết quả đúng.
+3. Lưu cả lần đúng và lần sai.
+4. Không xóa các cửa sổ dự đoán sai.
+5. Baseline và kiểm thử tổng quát hóa phải được báo cáo riêng.
+6. Mỗi run chỉ chứa một điều kiện kiểm thử đã xác định trước.
+7. Luôn dừng adapter cũ trước khi bắt đầu run mới.
+8. Không tạo lưu lượng ngoài kịch bản trong khi model đang thu thập 50 flow.

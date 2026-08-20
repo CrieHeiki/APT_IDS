@@ -1,0 +1,10 @@
+{
+  "threshold": 0.4,
+  "macro_f1": 0.9038176566287155,
+  "fpr_benign": 0.008551903180238995,
+  "accuracy": 0.989553159064205,
+  "cover_up_f1": 0.6451612903225806,
+  "data_exfiltration_f1": 0.8976377952755905,
+  "feasible": true,
+  "objective": 0.9038176566287155
+}

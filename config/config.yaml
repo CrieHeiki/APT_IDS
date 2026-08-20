@@ -1,0 +1,34 @@
+runtime:
+  log_dir: logs
+  state_dir: state
+  predictions_file: predictions.jsonl
+  poll_interval_seconds: 2.0
+  log_level: INFO
+
+artifacts:
+  bundle_dir: artifacts
+  model_file: model.keras
+
+cicflowmeter:
+  output_dir: work/cicflowmeter
+  flow_glob: "*.csv"
+  working_dir:
+  stop_timeout_seconds: 10
+  commands:
+    # Adjust these templates to the CICFlowMeter build installed on the VM.
+    # For Java builds, use a list such as:
+    # ["java", "-jar", "tools/CICFlowMeter.jar", "-i", "{interface}", "-c", "{output_dir}"]
+    live: ["/mnt/apt10g/apt_ids_runtime/.venv/bin/cicflowmeter", "-i", "{interface}", "-c", "{output_dir}/live_flows.csv"]
+    pcap: ["cicflowmeter", "-f", "{pcap}", "-c", "{output_dir}/pcap_flows.csv"]
+column_mapping:
+  cicflowmeter_time_unit: microseconds
+  additional_aliases:
+    src2dst_rst_packets:
+      - Fwd RST Flags
+      - Fwd RST Flag Count
+      - Fwd RST Flag Cnt
+    dst2src_ack_packets:
+      - Bwd ACK Flags
+      - Bwd ACK Flag Count
+      - Bwd ACK Flag Cnt
+
