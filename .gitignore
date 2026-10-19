@@ -1,0 +1,30 @@
+# Python build/runtime caches (do not modify archived frozen snapshot)
+__pycache__/
+*.py[cod]
+# The original frozen snapshot checksum list intentionally includes compiled files.
+# Keep these archived files eligible for Git even though caches elsewhere are ignored.
+!/generalization_test/frozen/**/__pycache__/
+!/generalization_test/frozen/**/__pycache__/*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Machine-specific local Python environment and overrides
+/.venv/
+/.venv
+/.env
+
+# Root deployment runtime artifacts; NOT generalization_test/logs or results
+/logs/
+/work/
+/state/
+/install.log
+
+# Local duplicate copies outside reproducibility snapshots
+/working_backup/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

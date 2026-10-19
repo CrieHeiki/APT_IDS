@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/mnt/apt10g/apt_ids_runtime/.venv/bin/cicflowmeter", line 3, in <module>
-    from cicflowmeter.sniffer import main
-  File "/mnt/apt10g/apt_ids_runtime/.venv/lib/python3.12/site-packages/cicflowmeter/sniffer.py", line 41
-    fields = fields.split(",")
-    ^^^^^^
-IndentationError: expected an indented block after 'if' statement on line 40
