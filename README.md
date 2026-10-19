@@ -17,6 +17,7 @@ APT-IDS organizes network flows into temporal sequences and assigns one of six l
 | Model test report | **98.98% accuracy**, **85.55% macro F1**, **86,995 test windows** (archived evaluation figure) |
 | Lab observations | **24 reconnaissance runs**, **405 prediction windows** recorded as RECONNAISSANCE in the saved CSV; *not* a global detection rate |
 | Main caveat | CICFlowMeter archived runtime: missing two required directional flag features; no successful prediction in the supplied log |
+| Artifact integrity | Existing deployment manifest has **one stale checksum** for `nfstream_adapter.py` (other 32 entries match); frozen snapshot hashes remain valid |
 
 The model is **loaded**, not retrained, by the deployment wrapper. Model-training source code and the full original training dataset are **not** included. Model-design/training-method descriptions are based on the supplied artifact metadata, not an independent reproduction of training.
 
@@ -123,6 +124,12 @@ python -m pytest
 ```
 
 For schema inspection of an **already produced** CSV (without launching CICFlowMeter), see the `--skip-cicflowmeter` option in `app/main.py`; its CSV search location is `cicflowmeter.output_dir` in the YAML config. **Do not fabricate missing feature values or rename unrelated columns just to obtain a prediction.**
+
+## Verification notes
+
+In the original supplied bundle, `artifacts/deployment_manifest.json` has **32/33 matching hashes**; its `nfstream_adapter.py` hash/size is stale, while the frozen snapshot records the actual file hash. The model, adapter and frozen evidence have **not** been rewritten just to silence this discrepancy. See [artifact integrity and dependency compatibility](docs/limitations.md#6-artifact-integrity-and-dependency-compatibility).
+
+A documentation-review run of `pytest` in a different environment (Python 3.13, scikit-learn 1.8.0, TensorFlow unavailable) produced **7 passed, 2 skipped, 2 failed**. Both failures involve loading an imputer saved with **scikit-learn 1.6.1** into 1.8.0; this does *not* establish failure under the repository's pinned versions. No runtime or model patch was introduced.
 
 ## Documentation
 
