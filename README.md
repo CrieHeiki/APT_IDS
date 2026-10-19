@@ -1,132 +1,134 @@
-# APT IDS VM Deployment
+# APT-IDS — Network Intrusion Detection & Attack-Stage Classification
 
-This project is a self-contained Ubuntu/Linux deployment wrapper for the trained
-APT stage classifier. It does not retrain the model.
+**Research-oriented deployment and evaluation of a CNN–BiLSTM–MultiHeadAttention network-flow classifier.**
 
-## Selected Artifacts
+APT-IDS organizes network flows into temporal sequences and assigns one of six labels: **BENIGN**, **COVER UP**, **DATA EXFILTRATION**, **ESTABLISH FOOTHOLD**, **LATERAL MOVEMENT**, or **RECONNAISSANCE**. This repository contains a Linux **CICFlowMeter deployment wrapper**, an **NFStream-based experimental inference path**, pretrained model and preprocessing artifacts, tests, and archived experiment results.
 
-The deployed artifacts are copied into `artifacts/` from the compatible
-deployment bundle:
+> **Scope / verification status:** The archived **model test-set report** and **NFStream reconnaissance experiments** are two different sources of evidence. The CICFlowMeter wrapper is included, but the archived runtime log shows a **feature-schema incompatibility that prevented inference** in that run. This repository does **not** demonstrate a fully validated end-to-end CICFlowMeter deployment. [See limitations](docs/limitations.md).
 
-- `model.keras`: CNN-BiLSTM-MultiHeadAttention v4.5 Safe.
-- `preprocessor_bundle.joblib`: imputer, scaler, label encoder, feature schema,
-  selected feature indices, frequency maps, z-score clipping stats, and config.
-- `threshold.json`: validation-calibrated attack score threshold `0.4`.
-- `feature_schema.json`, `preprocessing_config.json`, `label_mapping.csv`, and
-  related manifest files for inspection.
+## At a glance
 
-The model input is one sequence of shape `(50, 21)` with stride `10`.
-Classes are `BENIGN`, `COVER UP`, `DATA EXFILTRATION`,
-`ESTABLISH FOOTHOLD`, `LATERAL MOVEMENT`, and `RECONNAISSANCE`.
+| Item | What is in this repository |
+| --- | --- |
+| Task | 6-class network-flow sequence classification (benign + five attack-stage labels) |
+| Model | CNN–BiLSTM–MultiHeadAttention v4.5 Safe (saved artifact) |
+| Model input | **50 consecutive flows × 21 selected features**, stride **10**, grouped by source entity when available |
+| Inference decision | Prior-corrected class probabilities and calibrated attack-score threshold **0.4** |
+| Model test report | **98.98% accuracy**, **85.55% macro F1**, **86,995 test windows** (archived evaluation figure) |
+| Lab observations | **24 reconnaissance runs**, **405 prediction windows** recorded as RECONNAISSANCE in the saved CSV; *not* a global detection rate |
+| Main caveat | CICFlowMeter archived runtime: missing two required directional flag features; no successful prediction in the supplied log |
 
-## Pipeline
+The model is **loaded**, not retrained, by the deployment wrapper. Model-training source code and the full original training dataset are **not** included. Model-design/training-method descriptions are based on the supplied artifact metadata, not an independent reproduction of training.
 
-`interface/pcap -> CICFlowMeter -> CSV reader -> controlled column mapping ->
-schema check -> training preprocessing artifacts -> sliding window ->
-Keras model -> prior correction and threshold rule -> JSONL logs`.
+## Architecture
 
-The training schema uses NFStream-style feature names. `app/feature_adapter.py`
-maps CICFlowMeter column names into that schema only when a controlled mapping is
-available. Missing selected features raise an error; the app does not silently
-fill missing required features.
+**A. CICFlowMeter-based deployment wrapper** (`app/`):
 
-## Ubuntu Install
-
-Install OS packages as appropriate for your VM and CICFlowMeter build, for
-example Java and packet capture libraries:
-
-```bash
-sudo apt update
-sudo apt install -y python3 python3-venv python3-dev build-essential default-jre tcpdump
+```mermaid
+flowchart LR
+    A[Network interface / PCAP] --> B[CICFlowMeter]
+    B --> C[CSV flow reader]
+    C --> D[Controlled feature mapping and schema validation]
+    D --> E[Saved preprocessing bundle]
+    E --> F[Per-entity sliding windows: 50 x 21, stride 10]
+    F --> G[CNN-BiLSTM-MHA model]
+    G --> H[Prior correction and threshold]
+    H --> I[Console / predictions JSONL]
+    D -->|Missing required columns| J[Preprocessing error JSONL]
 ```
 
-Then set up Python dependencies:
+**B. NFStream experimental inference path** (`artifacts/inference.py`, `artifacts/nfstream_adapter_fast.py`, `generalization_test/`):
+
+```mermaid
+flowchart LR
+    A[Network interface / PCAP] --> B[NFStream flow features]
+    B --> C[APTStageDetector: saved preprocessing and windows]
+    C --> D[Same saved model and threshold]
+    D --> E[Adapter output / archived run logs]
+    E --> F[Reconnaissance results CSV]
+```
+
+The NFStream results **must not** be presented as validation of the CICFlowMeter path. Module-by-module data flow and the point of failure are documented in [System architecture](docs/architecture.md).
+
+## Archived evaluation evidence
+
+### Model test-set report (offline)
+
+| Metric | Value | Context |
+| --- | ---: | --- |
+| Accuracy | **98.98%** | 86,995 test windows |
+| Macro F1 | **85.55%** | Each class has equal weight |
+| BENIGN F1 | 99.51% | 79,520 support |
+| COVER UP F1 / recall | **48.48% / 38.10%** | Only **21** test windows for this class |
+| RECONNAISSANCE F1 | 95.97% | 513 support |
+
+![Archived test classification report](artifacts/report_ready/03_test_classification_report.png)
+
+[Confusion matrix (counts)](artifacts/report_ready/01_test_confusion_matrix_counts.png) · [Normalized confusion matrix](artifacts/report_ready/02_test_confusion_matrix_normalized.png) · [Training curves (archived)](artifacts/report_ready/04_training_curves.png)
+
+`artifacts/model_info.json` records a **validation-calibrated** macro F1 of approximately **90.38%** for threshold selection; it is **not** the test macro F1 above. The report image is an archived result, not a newly executed evaluation.
+
+### NFStream reconnaissance lab results
+
+| Test group | Distinct recorded runs | Prediction windows | Expected class in saved runs |
+| --- | ---: | ---: | --- |
+| Baseline | 10 | 199 | RECONNAISSANCE |
+| Reconnaissance variants | 14 | 206 | RECONNAISSANCE |
+| **Total** | **24** | **405** | **405/405 windows labeled RECONNAISSANCE** |
+
+The observations are **window-level results from reconnaissance-only runs**. They do not establish a false-positive rate on benign traffic, class-wide effectiveness, production-readiness, or detection latency. Windows overlap within runs. The saved `detection_latency_seconds=0` values for the variants are **not reliable latency measurements**; see [Experiments](docs/experiments.md).
+
+Source evidence: [results.csv](generalization_test/results/results.csv), [experiment rules](generalization_test/TEST_RULES.txt), [baseline logs](generalization_test/logs/recon_baseline/), [variant logs](generalization_test/logs/recon_variants/) and [frozen snapshot](generalization_test/frozen/snapshot_20260728_194825/).
+
+## Repository layout
+
+```text
+APT_IDS-main/
+├── README.md
+├── docs/                         # Architecture, model, experiments, limitations
+├── app/                          # CICFlowMeter wrapper; unchanged Python modules
+├── artifacts/                    # Saved model, preprocessing, reports, NFStream adapter
+├── config/config.yaml            # Original VM-specific runtime config
+├── generalization_test/
+│   ├── TEST_RULES.txt            # Experimental controls
+│   ├── experiment.env            # Original VM-specific environment variables
+│   ├── scripts/                  # Existing evaluation/verification scripts
+│   ├── results/results.csv       # Existing recorded observations
+│   ├── logs/                      # Existing experiment evidence
+│   └── frozen/                    # Preserved reproducibility snapshot/checksums
+├── scripts/                      # Existing deployment and scenario scripts
+├── tests/                        # Existing tests
+├── requirements.txt
+└── pytest.ini
+```
+
+## Environment and original deployment instructions
+
+This documentation **does not require you to rebuild the lab**. The commands below describe the existing wrapper, and are **not claimed to work unmodified on a new host**. The original config and experiment scripts contain absolute paths, interfaces, and virtual-environment locations specific to the archived VM.
+
+The original deployment installer uses **Python 3.12**, with dependency pins in [requirements.txt](requirements.txt). CICFlowMeter and any system-level packet-capture prerequisites must be installed separately. The repository **does not contain** a bundled CICFlowMeter binary or sample PCAP.
 
 ```bash
-cd APT_IDS_VM_DEPLOY
+# Only in a deliberately prepared Linux environment:
 bash scripts/install_ubuntu.sh
-```
+# Configure CICFlowMeter commands in config/config.yaml for your local installation.
 
-Use Python 3.12 or 3.13 for the deployment environment. The artifacts were
-saved with TensorFlow `2.20.0`, Keras `3.13.2`, and scikit-learn `1.6.1`; the
-root `requirements.txt` pins the versions that matter for model and
-preprocessor compatibility.
+# Examples using your *own* capture/interface (illustrative, not verified here):
+python -m app.main --mode pcap --pcap /path/to/your.pcap --schema-check-only
+python -m app.main --mode pcap --pcap /path/to/your.pcap
+python -m app.main --mode live --interface <your-interface>
 
-Install CICFlowMeter separately. If your build uses a Java jar, edit
-`config/config.yaml` to point at it, for example:
-
-```yaml
-cicflowmeter:
-  commands:
-    live: ["java", "-jar", "tools/CICFlowMeter.jar", "-i", "{interface}", "-c", "{output_dir}"]
-    pcap: ["java", "-jar", "tools/CICFlowMeter.jar", "-f", "{pcap}", "-c", "{output_dir}"]
-```
-
-## Interface Check
-
-List interfaces before live capture:
-
-```bash
-ip -br link
-ip -br addr
-```
-
-Packet capture normally requires capabilities or an elevated shell for the
-external CICFlowMeter process. The Python application itself does not call
-`sudo`.
-
-## Run
-
-Live mode:
-
-```bash
-python -m app.main --mode live --interface ens33
-```
-
-or:
-
-```bash
-bash scripts/run_live.sh ens33
-```
-
-PCAP mode:
-
-```bash
-python -m app.main --mode pcap --pcap samples/test.pcap
-```
-
-or:
-
-```bash
-bash scripts/run_pcap.sh samples/test.pcap
-```
-
-Outputs are printed to the terminal and appended to `logs/predictions.jsonl`.
-CSV read checkpoints are stored in `state/flow_reader_state.json` so live mode
-does not re-predict old rows after each poll.
-
-## Schema Check
-
-Use this after configuring CICFlowMeter to verify column compatibility:
-
-```bash
-python -m app.main --mode pcap --pcap samples/test.pcap --schema-check-only
-```
-
-If your CICFlowMeter version does not emit directional `Fwd RST` or `Bwd ACK`
-columns, the model's selected features cannot be reproduced exactly from that
-CSV alone. Configure equivalent aliases in `config/config.yaml` only when your
-CICFlowMeter build really provides those columns.
-
-## Tests
-
-After installing dependencies:
-
-```bash
+# Existing tests, provided dependencies are installed:
 python -m pytest
-python -m compileall app tests
 ```
 
-The tests cover artifact loading, model input shape, selected feature order,
-CICFlowMeter mapping, preprocessing dimensions, fake-batch inference, sliding
-window stride, label mapping, and missing/NaN/infinity handling.
+For schema inspection of an **already produced** CSV (without launching CICFlowMeter), see the `--skip-cicflowmeter` option in `app/main.py`; its CSV search location is `cicflowmeter.output_dir` in the YAML config. **Do not fabricate missing feature values or rename unrelated columns just to obtain a prediction.**
+
+## Documentation
+
+- [Architecture and component responsibilities](docs/architecture.md)
+- [Model, features and preprocessing](docs/model-and-preprocessing.md)
+- [Experimental design, archived results and interpretation](docs/experiments.md)
+- [Known limitations and evidence boundaries](docs/limitations.md)
+
+**Scope note:** This is a documented research/deployment artifact, not a certified production IDS. No model weights, data collection functions, evaluation scripts, frozen snapshots or tests were modified as part of the documentation clean-up.
